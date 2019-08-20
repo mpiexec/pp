@@ -1,0 +1,64 @@
+---
+- hosts: all
+  gather_facts: yes
+  become: yes
+  tasks:
+
+  - name: ping srv
+    ping:
+
+  - name: install pkgs
+    yum: name=python3 state=installed
+
+  - name: clone repo (staging)
+    git:
+      repo: 'https://github.com/mpiexec/{{ app_name }}.git'
+      dest: /home/{{ ansible_ssh_user }}/{{ dir_stag }}
+      update: yes
+
+  - name: install requirements (staging)
+    pip:
+      requirements: /home/{{ ansible_ssh_user }}/{{ dir_stag }}/requirements.txt
+      virtualenv: /home/{{ ansible_ssh_user }}/{{ dir_stag }}/env
+      virtualenv_python: python3.6
+
+  - name: template systemd service config (staging)
+    template:
+      src: .service-stag.j2
+      dest: /etc/systemd/system/{{ dir_stag }}.service
+
+  - name: start app via systemd (staging)
+    service: name={{ dir_stag }}.service state=restarted
+
+  - name: get url
+    uri:
+      url: http://127.0.0.1:{{ port_stag }}
+    register: resp
+    ignore_errors: yes
+
+  - block:
+
+    - name: clone repo (production)
+      git:
+        repo: 'https://github.com/mpiexec/{{ app_name }}.git'
+        dest: /home/{{ ansible_ssh_user }}/{{ dir_prod }}
+        update: yes
+
+    - name: install requirements (production)
+      pip:
+        requirements: /home/{{ ansible_ssh_user }}/{{ dir_prod }}/requirements.txt
+        virtualenv: /home/{{ ansible_ssh_user }}/{{ dir_prod }}/env
+        virtualenv_python: python3.6
+
+    - name: template systemd service config (production)
+      template:
+        src: .service-prod.j2
+        dest: /etc/systemd/system/{{ dir_prod }}.service
+
+    - name: start app via systemd (production)
+      service: name={{ dir_prod }}.service state=restarted
+
+    when: resp.status == 200
+
+  - name: stop staging app
+    service: name={{ dir_stag }}.service state=stopped

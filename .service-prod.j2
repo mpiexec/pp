@@ -1,0 +1,13 @@
+[Unit]
+Description=Gunicorn instance to serve {{ app_name }}
+After=network.target
+
+[Service]
+User={{ ansible_ssh_user }}
+Group={{ ansible_ssh_user }}
+WorkingDirectory=/home/{{ ansible_ssh_user }}/{{ dir_prod }}
+Environment="PATH=/home/{{ ansible_ssh_user }}/{{ dir_prod }}/env/bin"
+ExecStart=/bin/bash -c 'python3 /home/{{ ansible_ssh_user }}/{{ dir_prod }}/env/bin/gunicorn --bind 0.0.0.0:{{ port_prod }} simple:app'
+
+[Install]
+WantedBy=multi-user.target

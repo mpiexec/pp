@@ -1,0 +1,11 @@
+[servers]
+serv1	ansible_host=<IP>
+
+[servers:vars]
+ansible_user=<USER>
+ansible_ssh_private_key_file=<KEY>
+app_name=pp
+dir_prod=pp-production
+dir_stag=pp-staging
+port_prod=5000
+port_stag=5001
