@@ -9,4 +9,4 @@ def simple():
 
 @app.route('/ping')
 def pp():
-    return 'pong'
+    return 'p0ng'
